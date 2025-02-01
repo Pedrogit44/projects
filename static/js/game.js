@@ -4,64 +4,69 @@ class Game {
         this.renderer = new Renderer(this.canvas);
         this.ui = new UI();
         this.audio = new AudioManager();
-        
-        this.worldSize = 5000;
+
+        this.worldSize = 50000;
         this.player = new Ship(0, 0);
         this.entities = [this.player];
-        
-        // Initialize solar system
+
         this.initializeSolarSystem();
-        
-        // Setup input handling
+
         this.keys = {};
         this.setupInputHandlers();
-        
-        // Start game loop
+
         this.lastTime = 0;
         this.gameLoop(0);
     }
 
     initializeSolarSystem() {
-        // Add initial planets
         const planets = [
-            new Planet(500, 0, 50, "Alpha"),
-            new Planet(-800, 300, 70, "Beta"),
-            new Planet(0, -1000, 60, "Gamma")
+            new Planet(1000, 0, 100, "Mercury", 0.15),
+            new Planet(-2000, 800, 120, "Venus", 0.12),
+            new Planet(3500, -1200, 150, "Earth", 0.1),
+            new Planet(-5000, 2000, 130, "Mars", 0.08),
+            new Planet(8000, -3000, 250, "Jupiter", 0.05),
+            new Planet(-12000, 5000, 220, "Saturn", 0.03),
+            new Planet(16000, -6000, 200, "Uranus", 0.02),
+            new Planet(-20000, 8000, 190, "Neptune", 0.01)
         ];
         this.entities.push(...planets);
     }
 
     setupInputHandlers() {
-        window.addEventListener('keydown', (e) => this.keys[e.key] = true);
+        window.addEventListener('keydown', (e) => {
+            this.keys[e.key] = true;
+            if (e.key === 'i') {
+                this.ui.toggleInventory();
+            }
+        });
         window.addEventListener('keyup', (e) => this.keys[e.key] = false);
-        
-        // Initialize audio on first user interaction
+
         window.addEventListener('click', () => this.audio.initialize());
     }
 
     update(deltaTime) {
-        // Handle player input
-        if (this.keys['ArrowUp']) {
-            this.player.thrust = Math.min(this.player.thrust + 100 * deltaTime, this.player.maxThrust);
+        if (this.keys['ArrowUp'] || this.keys['w']) {
+            this.player.thrust = Math.min(this.player.thrust + 200 * deltaTime, this.player.maxThrust);
             this.audio.playThrustSound();
+        } else if (this.keys['ArrowDown'] || this.keys['s']) {
+            this.player.thrust = Math.max(this.player.thrust - 300 * deltaTime, -this.player.maxThrust / 2);
         } else {
-            this.player.thrust = Math.max(this.player.thrust - 50 * deltaTime, 0);
+            this.player.thrust = 0;
         }
-        
-        if (this.keys['ArrowLeft']) {
+
+        if (this.keys['ArrowLeft'] || this.keys['a']) {
             this.player.rotation -= this.player.turnSpeed * deltaTime;
         }
-        if (this.keys['ArrowRight']) {
+        if (this.keys['ArrowRight'] || this.keys['d']) {
             this.player.rotation += this.player.turnSpeed * deltaTime;
         }
-        
-        // Update all entities
+
         this.entities.forEach(entity => entity.update(deltaTime));
-        
-        // Update UI
+
+        this.renderer.updateCamera(this.player);
+
         this.ui.updateStats(this.player);
-        
-        // Check collisions
+
         this.checkCollisions();
     }
 
@@ -78,18 +83,24 @@ class Game {
     handleCollision(entity1, entity2) {
         if (entity1 instanceof Ship || entity2 instanceof Ship) {
             const ship = entity1 instanceof Ship ? entity1 : entity2;
-            ship.health -= 10;
+            const other = entity1 instanceof Ship ? entity2 : entity1;
+
+            const relativeSpeed = Math.sqrt(
+                Math.pow(ship.velocity.x - other.velocity.x, 2) +
+                Math.pow(ship.velocity.y - other.velocity.y, 2)
+            );
+
+            const damage = Math.min(50, relativeSpeed / 20);
+            ship.health -= damage;
             this.audio.playCollisionSound();
         }
     }
 
     render() {
         this.renderer.clear();
-        
-        // Draw star at center
+
         this.renderer.drawStar(0, 0);
-        
-        // Draw all entities
+
         this.entities.forEach(entity => {
             if (entity instanceof Ship) {
                 this.renderer.drawShip(entity, entity === this.player);
@@ -97,13 +108,12 @@ class Game {
                 this.renderer.drawPlanet(entity);
             }
         });
-        
-        // Draw minimap
+
         this.renderer.drawMinimap(this, this.player.x, this.player.y);
     }
 
     gameLoop(currentTime) {
-        const deltaTime = (currentTime - this.lastTime) / 1000;
+        const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1);
         this.lastTime = currentTime;
 
         this.update(deltaTime);
@@ -113,7 +123,6 @@ class Game {
     }
 }
 
-// Start the game when the page loads
 window.addEventListener('load', () => {
     new Game();
 });
