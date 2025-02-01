@@ -16,6 +16,8 @@ class Game {
         this.setupInputHandlers();
 
         this.lastTime = 0;
+        this.frameCount = 0;
+        this.lastDebugTime = 0;
         this.gameLoop(0);
     }
 
@@ -90,6 +92,17 @@ class Game {
         this.renderer.updateCamera(this.player);
         this.ui.updateControls(this.player);
         this.checkCollisions();
+
+        // Debug logging every 5 seconds
+        this.frameCount++;
+        const currentTime = performance.now();
+        if (currentTime - this.lastDebugTime > 5000) {
+            console.log(`Debug Info - Position: (${this.player.x.toFixed(2)}, ${this.player.y.toFixed(2)}), ` +
+                       `Velocity: (${this.player.velocity.x.toFixed(2)}, ${this.player.velocity.y.toFixed(2)}), ` +
+                       `Speed: ${this.player.getSpeed().toFixed(2)}, ` +
+                       `Frame Count: ${this.frameCount}`);
+            this.lastDebugTime = currentTime;
+        }
     }
 
     handleCollision(entity1, entity2) {

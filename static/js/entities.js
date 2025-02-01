@@ -40,7 +40,7 @@ class Ship extends Entity {
             this.velocity.y += direction.y * thrustPower;
         }
 
-        // Cap maximum speed
+        // Normalize velocity if it's getting too large
         const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
         if (currentSpeed > this.maxSpeed) {
             const scale = this.maxSpeed / currentSpeed;
@@ -48,12 +48,47 @@ class Ship extends Entity {
             this.velocity.y *= scale;
         }
 
-        // Update position
-        this.x += this.velocity.x * deltaTime;
-        this.y += this.velocity.y * deltaTime;
+        // Add minimal drag to prevent infinite drift
+        const dragFactor = 0.9999;
+        this.velocity.x *= dragFactor;
+        this.velocity.y *= dragFactor;
+
+        // Update position with boundary checking
+        const newX = this.x + this.velocity.x * deltaTime;
+        const newY = this.y + this.velocity.y * deltaTime;
+
+        // World boundary handling (50000 is worldSize from game.js)
+        const worldBoundary = 50000;
+        if (Math.abs(newX) < worldBoundary && Math.abs(newY) < worldBoundary) {
+            this.x = newX;
+            this.y = newY;
+        } else {
+            // Bounce off the boundary
+            if (Math.abs(newX) >= worldBoundary) {
+                this.velocity.x *= -0.5;
+            }
+            if (Math.abs(newY) >= worldBoundary) {
+                this.velocity.y *= -0.5;
+            }
+        }
 
         // Store current speed as acceleration for UI display
         this.acceleration = currentSpeed;
+
+        // Safety check - if values become invalid, reset the ship
+        if (!this.isValidNumber(this.x) || !this.isValidNumber(this.y) ||
+            !this.isValidNumber(this.velocity.x) || !this.isValidNumber(this.velocity.y)) {
+            console.error("Invalid ship state detected, resetting position");
+            this.x = 0;
+            this.y = 0;
+            this.velocity.x = 0;
+            this.velocity.y = 0;
+            this.thrust = 0;
+        }
+    }
+
+    isValidNumber(value) {
+        return typeof value === 'number' && isFinite(value) && Math.abs(value) < 1e6;
     }
 
     getSpeed() {
