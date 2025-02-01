@@ -49,35 +49,58 @@ class Ship extends Entity {
         const accelerationX = thrustVector.x * this.acceleration * deltaTime;
         const accelerationY = thrustVector.y * this.acceleration * deltaTime;
 
-        this.velocity.x += accelerationX;
-        this.velocity.y += accelerationY;
+        // Safely update velocity
+        const newVelX = this.velocity.x + accelerationX;
+        const newVelY = this.velocity.y + accelerationY;
 
-        // Apply inertial dampening
+        // Check for valid velocity values before assigning
+        if (!isNaN(newVelX) && isFinite(newVelX)) {
+            this.velocity.x = newVelX;
+        }
+        if (!isNaN(newVelY) && isFinite(newVelY)) {
+            this.velocity.y = newVelY;
+        }
+
+        // Apply inertial dampening when not thrusting
         if (Math.abs(this.thrust) < 0.1) {
             this.velocity.x *= (1 - this.inertialDampening * deltaTime);
             this.velocity.y *= (1 - this.inertialDampening * deltaTime);
         }
 
-        // Cap maximum speed
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        if (currentSpeed > this.maxSpeed) {
+        // Cap maximum speed with safe calculations
+        const currentSpeed = Math.sqrt(
+            Math.pow(this.velocity.x, 2) + Math.pow(this.velocity.y, 2)
+        );
+
+        if (currentSpeed > this.maxSpeed && currentSpeed > 0) {
             const scale = this.maxSpeed / currentSpeed;
             this.velocity.x *= scale;
             this.velocity.y *= scale;
         }
 
-        // Update position
-        this.x += this.velocity.x * deltaTime;
-        this.y += this.velocity.y * deltaTime;
+        // Safely update position
+        const newX = this.x + this.velocity.x * deltaTime;
+        const newY = this.y + this.velocity.y * deltaTime;
 
-        // Prevent NaN values
-        if (isNaN(this.x) || isNaN(this.y)) {
+        // Only update position if values are valid
+        if (!isNaN(newX) && isFinite(newX)) {
+            this.x = newX;
+        }
+        if (!isNaN(newY) && isFinite(newY)) {
+            this.y = newY;
+        }
+
+        // Reset if invalid values are detected
+        if (isNaN(this.x) || isNaN(this.y) || 
+            !isFinite(this.x) || !isFinite(this.y) ||
+            Math.abs(this.x) > 1e6 || Math.abs(this.y) > 1e6) {
+            console.error("Invalid position detected, resetting ship");
             this.x = 0;
             this.y = 0;
             this.velocity.x = 0;
             this.velocity.y = 0;
             this.acceleration = 0;
-            console.error("Position reset due to NaN values");
+            this.thrust = 0;
         }
     }
 
