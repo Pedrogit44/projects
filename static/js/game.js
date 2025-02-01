@@ -8,6 +8,7 @@ class Game {
         this.worldSize = 50000;
         this.player = new Ship(0, 0);
         this.entities = [this.player];
+        this.targetDirection = null;
 
         this.initializeSolarSystem();
 
@@ -20,14 +21,14 @@ class Game {
 
     initializeSolarSystem() {
         const planets = [
-            new Planet(1000, 0, 100, "Mercury", 0.15),
-            new Planet(-2000, 800, 120, "Venus", 0.12),
-            new Planet(3500, -1200, 150, "Earth", 0.1),
-            new Planet(-5000, 2000, 130, "Mars", 0.08),
-            new Planet(8000, -3000, 250, "Jupiter", 0.05),
-            new Planet(-12000, 5000, 220, "Saturn", 0.03),
-            new Planet(16000, -6000, 200, "Uranus", 0.02),
-            new Planet(-20000, 8000, 190, "Neptune", 0.01)
+            new Planet(1000, 0, 100, "Mercury", 0.5),
+            new Planet(-2000, 800, 120, "Venus", 0.4),
+            new Planet(3500, -1200, 150, "Earth", 0.3),
+            new Planet(-5000, 2000, 130, "Mars", 0.25),
+            new Planet(8000, -3000, 250, "Jupiter", 0.2),
+            new Planet(-12000, 5000, 220, "Saturn", 0.15),
+            new Planet(16000, -6000, 200, "Uranus", 0.1),
+            new Planet(-20000, 8000, 190, "Neptune", 0.08)
         ];
         this.entities.push(...planets);
     }
@@ -41,10 +42,36 @@ class Game {
         });
         window.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
+        // Add mouse click handler for direction setting
+        this.canvas.addEventListener('click', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+
+            // Convert screen coordinates to world coordinates
+            const worldCoords = this.renderer.screenToWorld(screenX, screenY);
+            this.targetDirection = {
+                x: worldCoords.x - this.player.x,
+                y: worldCoords.y - this.player.y
+            };
+
+            // Update player rotation to face click point
+            this.player.rotation = Math.atan2(this.targetDirection.y, this.targetDirection.x);
+        });
+
+        // Add mouse wheel handler for zooming
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+            this.renderer.camera.scale *= zoomFactor;
+            this.renderer.camera.scale = Math.max(0.1, Math.min(5, this.renderer.camera.scale));
+        });
+
         window.addEventListener('click', () => this.audio.initialize());
     }
 
     update(deltaTime) {
+        // Forward/backward thrust with arrow keys
         if (this.keys['ArrowUp'] || this.keys['w']) {
             this.player.thrust = Math.min(this.player.thrust + 200 * deltaTime, this.player.maxThrust);
             this.audio.playThrustSound();
@@ -54,10 +81,11 @@ class Game {
             this.player.thrust = 0;
         }
 
-        if (this.keys['ArrowLeft'] || this.keys['a']) {
+        // Manual rotation override with A/D keys
+        if (this.keys['a']) {
             this.player.rotation -= this.player.turnSpeed * deltaTime;
         }
-        if (this.keys['ArrowRight'] || this.keys['d']) {
+        if (this.keys['d']) {
             this.player.rotation += this.player.turnSpeed * deltaTime;
         }
 
@@ -66,18 +94,9 @@ class Game {
         this.renderer.updateCamera(this.player);
 
         this.ui.updateStats(this.player);
+        this.ui.updateControls(this.player); // Add control information
 
         this.checkCollisions();
-    }
-
-    checkCollisions() {
-        for (let i = 0; i < this.entities.length; i++) {
-            for (let j = i + 1; j < this.entities.length; j++) {
-                if (Physics.checkCollision(this.entities[i], this.entities[j])) {
-                    this.handleCollision(this.entities[i], this.entities[j]);
-                }
-            }
-        }
     }
 
     handleCollision(entity1, entity2) {
@@ -93,6 +112,16 @@ class Game {
             const damage = Math.min(50, relativeSpeed / 20);
             ship.health -= damage;
             this.audio.playCollisionSound();
+        }
+    }
+
+    checkCollisions() {
+        for (let i = 0; i < this.entities.length; i++) {
+            for (let j = i + 1; j < this.entities.length; j++) {
+                if (Physics.checkCollision(this.entities[i], this.entities[j])) {
+                    this.handleCollision(this.entities[i], this.entities[j]);
+                }
+            }
         }
     }
 

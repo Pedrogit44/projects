@@ -19,8 +19,8 @@ class Renderer {
 
     updateCamera(player) {
         // Smoothly follow the player
-        const targetX = -player.x + this.canvas.width / 2;
-        const targetY = -player.y + this.canvas.height / 2;
+        const targetX = -player.x * this.camera.scale + this.canvas.width / 2;
+        const targetY = -player.y * this.camera.scale + this.canvas.height / 2;
 
         this.camera.x += (targetX - this.camera.x) * 0.1;
         this.camera.y += (targetY - this.camera.y) * 0.1;
@@ -28,20 +28,30 @@ class Renderer {
 
     worldToScreen(x, y) {
         return {
-            x: x + this.camera.x,
-            y: y + this.camera.y
+            x: x * this.camera.scale + this.camera.x,
+            y: y * this.camera.scale + this.camera.y
+        };
+    }
+
+    screenToWorld(screenX, screenY) {
+        return {
+            x: (screenX - this.camera.x) / this.camera.scale,
+            y: (screenY - this.camera.y) / this.camera.scale
         };
     }
 
     drawStar(x, y) {
         const screen = this.worldToScreen(x, y);
         this.ctx.beginPath();
-        this.ctx.arc(screen.x, screen.y, 100, 0, Math.PI * 2);
+        this.ctx.arc(screen.x, screen.y, 100 * this.camera.scale, 0, Math.PI * 2);
         this.ctx.fillStyle = '#ffff00';
         this.ctx.fill();
 
         // Draw glow effect
-        const gradient = this.ctx.createRadialGradient(screen.x, screen.y, 100, screen.x, screen.y, 200);
+        const gradient = this.ctx.createRadialGradient(
+            screen.x, screen.y, 100 * this.camera.scale,
+            screen.x, screen.y, 200 * this.camera.scale
+        );
         gradient.addColorStop(0, 'rgba(255, 255, 0, 0.2)');
         gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
         this.ctx.fillStyle = gradient;
@@ -53,6 +63,7 @@ class Renderer {
         this.ctx.save();
         this.ctx.translate(screen.x, screen.y);
         this.ctx.rotate(ship.rotation);
+        this.ctx.scale(this.camera.scale, this.camera.scale);
 
         // Draw ship triangle
         this.ctx.beginPath();
@@ -87,22 +98,24 @@ class Renderer {
 
     drawPlanet(planet) {
         const screen = this.worldToScreen(planet.x, planet.y);
+        const scaledRadius = planet.radius * this.camera.scale;
+
         this.ctx.beginPath();
-        this.ctx.arc(screen.x, screen.y, planet.radius, 0, Math.PI * 2);
+        this.ctx.arc(screen.x, screen.y, scaledRadius, 0, Math.PI * 2);
         this.ctx.fillStyle = '#666666';
         this.ctx.fill();
 
         // Draw orbit path
         const centerScreen = this.worldToScreen(0, 0);
         this.ctx.beginPath();
-        this.ctx.arc(centerScreen.x, centerScreen.y, planet.orbitRadius, 0, Math.PI * 2);
+        this.ctx.arc(centerScreen.x, centerScreen.y, planet.orbitRadius * this.camera.scale, 0, Math.PI * 2);
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         this.ctx.stroke();
 
         // Draw planet name
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = '12px monospace';
-        this.ctx.fillText(planet.name, screen.x - 20, screen.y - planet.radius - 10);
+        this.ctx.fillText(planet.name, screen.x - 20, screen.y - scaledRadius - 10);
     }
 
     drawMinimap(gameState, centerX, centerY) {

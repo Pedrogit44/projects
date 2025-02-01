@@ -60,3 +60,27 @@ body {
     color: var(--bs-light);
     pointer-events: auto;
 }
+
+.controls-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--bs-info);
+    border-radius: 4px;
+    padding: 15px;
+    color: var(--bs-light);
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.controls-info h4 {
+    margin: 0 0 10px 0;
+    color: var(--bs-info);
+}
+
+.controls-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
