@@ -32,25 +32,18 @@ class Ship extends Entity {
             y: Math.sin(this.rotation)
         };
 
-        // Simple acceleration based on thrust
-        if (this.thrust > 0) {
-            // Accelerate
-            this.velocity.x += direction.x * this.thrust * deltaTime;
-            this.velocity.y += direction.y * this.thrust * deltaTime;
-        } else if (this.thrust < 0) {
-            // Brake
-            const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-            if (speed > 0) {
-                const scale = Math.max(0, 1 + this.thrust * deltaTime / speed);
-                this.velocity.x *= scale;
-                this.velocity.y *= scale;
-            }
+        // Apply thrust in current direction
+        if (this.thrust !== 0) {
+            // Add new velocity based on thrust direction
+            const thrustPower = this.thrust * deltaTime;
+            this.velocity.x += direction.x * thrustPower;
+            this.velocity.y += direction.y * thrustPower;
         }
 
         // Cap maximum speed
-        const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        if (speed > this.maxSpeed) {
-            const scale = this.maxSpeed / speed;
+        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        if (currentSpeed > this.maxSpeed) {
+            const scale = this.maxSpeed / currentSpeed;
             this.velocity.x *= scale;
             this.velocity.y *= scale;
         }
@@ -58,6 +51,9 @@ class Ship extends Entity {
         // Update position
         this.x += this.velocity.x * deltaTime;
         this.y += this.velocity.y * deltaTime;
+
+        // Store current speed as acceleration for UI display
+        this.acceleration = currentSpeed;
     }
 
     getSpeed() {

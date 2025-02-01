@@ -70,10 +70,10 @@ class Game {
     update(deltaTime) {
         // Forward/backward thrust with arrow keys
         if (this.keys['ArrowUp'] || this.keys['w']) {
-            this.player.thrust = 500; // Full forward thrust
+            this.player.thrust = this.player.maxThrust; // Full forward thrust
             this.audio.playThrustSound();
         } else if (this.keys['ArrowDown'] || this.keys['s']) {
-            this.player.thrust = -250; // Half reverse thrust for braking
+            this.player.thrust = -this.player.maxThrust / 2; // Half reverse thrust
         } else {
             this.player.thrust = 0;
         }
@@ -88,7 +88,7 @@ class Game {
 
         this.entities.forEach(entity => entity.update(deltaTime));
         this.renderer.updateCamera(this.player);
-        this.ui.updateStats(this.player);
+        this.ui.updateControls(this.player);
         this.checkCollisions();
     }
 
