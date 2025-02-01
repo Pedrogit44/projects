@@ -42,24 +42,21 @@ class Game {
         });
         window.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
-        // Add mouse click handler for direction setting
+        // Mouse click handler for direction setting
         this.canvas.addEventListener('click', (e) => {
             const rect = this.canvas.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
             const screenY = e.clientY - rect.top;
 
-            // Convert screen coordinates to world coordinates
             const worldCoords = this.renderer.screenToWorld(screenX, screenY);
-            this.targetDirection = {
-                x: worldCoords.x - this.player.x,
-                y: worldCoords.y - this.player.y
-            };
 
-            // Update player rotation to face click point
-            this.player.rotation = Math.atan2(this.targetDirection.y, this.targetDirection.x);
+            // Calculate angle to target
+            const dx = worldCoords.x - this.player.x;
+            const dy = worldCoords.y - this.player.y;
+            this.player.rotation = Math.atan2(dy, dx);
         });
 
-        // Add mouse wheel handler for zooming
+        // Smooth zoom with mouse wheel
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
@@ -73,10 +70,10 @@ class Game {
     update(deltaTime) {
         // Forward/backward thrust with arrow keys
         if (this.keys['ArrowUp'] || this.keys['w']) {
-            this.player.thrust = Math.min(this.player.thrust + 200 * deltaTime, this.player.maxThrust);
+            this.player.thrust = 500; // Full forward thrust
             this.audio.playThrustSound();
         } else if (this.keys['ArrowDown'] || this.keys['s']) {
-            this.player.thrust = Math.max(this.player.thrust - 300 * deltaTime, -this.player.maxThrust / 2);
+            this.player.thrust = -250; // Half reverse thrust for braking
         } else {
             this.player.thrust = 0;
         }
@@ -90,12 +87,8 @@ class Game {
         }
 
         this.entities.forEach(entity => entity.update(deltaTime));
-
         this.renderer.updateCamera(this.player);
-
         this.ui.updateStats(this.player);
-        this.ui.updateControls(this.player); // Add control information
-
         this.checkCollisions();
     }
 
@@ -104,12 +97,12 @@ class Game {
             const ship = entity1 instanceof Ship ? entity1 : entity2;
             const other = entity1 instanceof Ship ? entity2 : entity1;
 
-            const relativeSpeed = Math.sqrt(
+            const speed = Math.sqrt(
                 Math.pow(ship.velocity.x - other.velocity.x, 2) +
                 Math.pow(ship.velocity.y - other.velocity.y, 2)
             );
 
-            const damage = Math.min(50, relativeSpeed / 20);
+            const damage = Math.min(50, speed / 20);
             ship.health -= damage;
             this.audio.playCollisionSound();
         }
@@ -127,7 +120,6 @@ class Game {
 
     render() {
         this.renderer.clear();
-
         this.renderer.drawStar(0, 0);
 
         this.entities.forEach(entity => {

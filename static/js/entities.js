@@ -18,90 +18,46 @@ class Ship extends Entity {
         this.energy = 100;
         this.inventory = [];
         this.credits = 1000;
-        this.maxSpeed = 2000;
-        this.inertialDampening = 0.2;
+        this.maxSpeed = 1000;
         this.acceleration = 0;
-        this.maxAcceleration = 1000;
     }
 
     update(deltaTime) {
-        // Ensure deltaTime is within reasonable bounds
+        // Limit deltaTime to prevent large time steps
         deltaTime = Math.min(deltaTime, 0.1);
 
-        // Calculate thrust vector based on current rotation
-        const thrustVector = Physics.rotateVector(
-            { x: 1, y: 0 },
-            this.rotation
-        );
+        // Get direction vector from rotation
+        const direction = {
+            x: Math.cos(this.rotation),
+            y: Math.sin(this.rotation)
+        };
 
-        // Update acceleration based on thrust
-        if (this.thrust !== 0) {
-            const targetAcceleration = this.thrust > 0 ? this.maxAcceleration : -this.maxAcceleration / 2;
-            this.acceleration += (targetAcceleration - this.acceleration) * Math.min(deltaTime * 2, 1);
-        } else {
-            this.acceleration *= Math.max(0, 1 - deltaTime * 3);
+        // Simple acceleration based on thrust
+        if (this.thrust > 0) {
+            // Accelerate
+            this.velocity.x += direction.x * this.thrust * deltaTime;
+            this.velocity.y += direction.y * this.thrust * deltaTime;
+        } else if (this.thrust < 0) {
+            // Brake
+            const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+            if (speed > 0) {
+                const scale = Math.max(0, 1 + this.thrust * deltaTime / speed);
+                this.velocity.x *= scale;
+                this.velocity.y *= scale;
+            }
         }
 
-        // Clamp acceleration
-        this.acceleration = Math.max(-this.maxAcceleration/2, Math.min(this.maxAcceleration, this.acceleration));
-
-        // Apply acceleration to velocity
-        const accelerationX = thrustVector.x * this.acceleration * deltaTime;
-        const accelerationY = thrustVector.y * this.acceleration * deltaTime;
-
-        // Safely update velocity
-        const newVelX = this.velocity.x + accelerationX;
-        const newVelY = this.velocity.y + accelerationY;
-
-        // Check for valid velocity values before assigning
-        if (!isNaN(newVelX) && isFinite(newVelX)) {
-            this.velocity.x = newVelX;
-        }
-        if (!isNaN(newVelY) && isFinite(newVelY)) {
-            this.velocity.y = newVelY;
-        }
-
-        // Apply inertial dampening when not thrusting
-        if (Math.abs(this.thrust) < 0.1) {
-            this.velocity.x *= (1 - this.inertialDampening * deltaTime);
-            this.velocity.y *= (1 - this.inertialDampening * deltaTime);
-        }
-
-        // Cap maximum speed with safe calculations
-        const currentSpeed = Math.sqrt(
-            Math.pow(this.velocity.x, 2) + Math.pow(this.velocity.y, 2)
-        );
-
-        if (currentSpeed > this.maxSpeed && currentSpeed > 0) {
-            const scale = this.maxSpeed / currentSpeed;
+        // Cap maximum speed
+        const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        if (speed > this.maxSpeed) {
+            const scale = this.maxSpeed / speed;
             this.velocity.x *= scale;
             this.velocity.y *= scale;
         }
 
-        // Safely update position
-        const newX = this.x + this.velocity.x * deltaTime;
-        const newY = this.y + this.velocity.y * deltaTime;
-
-        // Only update position if values are valid
-        if (!isNaN(newX) && isFinite(newX)) {
-            this.x = newX;
-        }
-        if (!isNaN(newY) && isFinite(newY)) {
-            this.y = newY;
-        }
-
-        // Reset if invalid values are detected
-        if (isNaN(this.x) || isNaN(this.y) || 
-            !isFinite(this.x) || !isFinite(this.y) ||
-            Math.abs(this.x) > 1e6 || Math.abs(this.y) > 1e6) {
-            console.error("Invalid position detected, resetting ship");
-            this.x = 0;
-            this.y = 0;
-            this.velocity.x = 0;
-            this.velocity.y = 0;
-            this.acceleration = 0;
-            this.thrust = 0;
-        }
+        // Update position
+        this.x += this.velocity.x * deltaTime;
+        this.y += this.velocity.y * deltaTime;
     }
 
     getSpeed() {
@@ -114,7 +70,7 @@ class Planet extends Entity {
         super(x, y, radius);
         this.name = name;
         this.orbitRadius = Math.sqrt(x * x + y * y);
-        this.orbitSpeed = orbitSpeed / this.orbitRadius;
+        this.orbitSpeed = orbitSpeed * 2; // Increased orbit speed
         this.orbitAngle = Math.atan2(y, x);
         this.resources = {
             minerals: Math.random() * 100,
