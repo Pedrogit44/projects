@@ -48,47 +48,14 @@ class Ship extends Entity {
             this.velocity.y *= scale;
         }
 
-        // Add minimal drag to prevent infinite drift
-        const dragFactor = 0.9999;
-        this.velocity.x *= dragFactor;
-        this.velocity.y *= dragFactor;
-
-        // Update position with boundary checking
-        const newX = this.x + this.velocity.x * deltaTime;
-        const newY = this.y + this.velocity.y * deltaTime;
-
-        // World boundary handling (50000 is worldSize from game.js)
-        const worldBoundary = 50000;
-        if (Math.abs(newX) < worldBoundary && Math.abs(newY) < worldBoundary) {
-            this.x = newX;
-            this.y = newY;
-        } else {
-            // Bounce off the boundary
-            if (Math.abs(newX) >= worldBoundary) {
-                this.velocity.x *= -0.5;
-            }
-            if (Math.abs(newY) >= worldBoundary) {
-                this.velocity.y *= -0.5;
-            }
+        // Update position with basic validation
+        if (isFinite(this.velocity.x) && isFinite(this.velocity.y)) {
+            this.x += this.velocity.x * deltaTime;
+            this.y += this.velocity.y * deltaTime;
         }
 
         // Store current speed as acceleration for UI display
         this.acceleration = currentSpeed;
-
-        // Safety check - if values become invalid, reset the ship
-        if (!this.isValidNumber(this.x) || !this.isValidNumber(this.y) ||
-            !this.isValidNumber(this.velocity.x) || !this.isValidNumber(this.velocity.y)) {
-            console.error("Invalid ship state detected, resetting position");
-            this.x = 0;
-            this.y = 0;
-            this.velocity.x = 0;
-            this.velocity.y = 0;
-            this.thrust = 0;
-        }
-    }
-
-    isValidNumber(value) {
-        return typeof value === 'number' && isFinite(value) && Math.abs(value) < 1e6;
     }
 
     getSpeed() {

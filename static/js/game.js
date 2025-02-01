@@ -70,12 +70,12 @@ class Game {
     }
 
     update(deltaTime) {
-        // Forward/backward thrust with arrow keys
+        // Forward/backward thrust with arrow keys or WASD
         if (this.keys['ArrowUp'] || this.keys['w']) {
-            this.player.thrust = this.player.maxThrust; // Full forward thrust
+            this.player.thrust = this.player.maxThrust;
             this.audio.playThrustSound();
         } else if (this.keys['ArrowDown'] || this.keys['s']) {
-            this.player.thrust = -this.player.maxThrust / 2; // Half reverse thrust
+            this.player.thrust = -this.player.maxThrust / 2;
         } else {
             this.player.thrust = 0;
         }
@@ -93,16 +93,8 @@ class Game {
         this.ui.updateControls(this.player);
         this.checkCollisions();
 
-        // Debug logging every 5 seconds
-        this.frameCount++;
-        const currentTime = performance.now();
-        if (currentTime - this.lastDebugTime > 5000) {
-            console.log(`Debug Info - Position: (${this.player.x.toFixed(2)}, ${this.player.y.toFixed(2)}), ` +
-                       `Velocity: (${this.player.velocity.x.toFixed(2)}, ${this.player.velocity.y.toFixed(2)}), ` +
-                       `Speed: ${this.player.getSpeed().toFixed(2)}, ` +
-                       `Frame Count: ${this.frameCount}`);
-            this.lastDebugTime = currentTime;
-        }
+        // Debug logging
+        console.log(`Speed: ${this.player.getSpeed().toFixed(2)}, Position: (${this.player.x.toFixed(2)}, ${this.player.y.toFixed(2)})`);
     }
 
     handleCollision(entity1, entity2) {
