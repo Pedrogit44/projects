@@ -74,12 +74,13 @@ class Renderer {
         this.ctx.fillStyle = isPlayer ? '#00ff00' : '#ff0000';
         this.ctx.fill();
 
-        // Draw engine thrust
-        if (ship.thrust > 0) {
+        // Draw engine thrust with intensity based on acceleration
+        if (ship.thrust !== 0) {
+            const thrustLength = Math.abs(ship.thrust) / ship.maxThrust * 20;
             this.ctx.beginPath();
             this.ctx.moveTo(-10, 0);
-            this.ctx.lineTo(-20 - ship.thrust/10, 0);
-            this.ctx.strokeStyle = '#ff6600';
+            this.ctx.lineTo(-10 - thrustLength, 0);
+            this.ctx.strokeStyle = ship.thrust > 0 ? '#ff6600' : '#3366ff';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
         }
@@ -91,6 +92,15 @@ class Renderer {
             this.ctx.lineTo(ship.velocity.x * 0.5, ship.velocity.y * 0.5);
             this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
             this.ctx.stroke();
+
+            // Draw acceleration indicator
+            if (ship.acceleration !== 0) {
+                const accScale = ship.acceleration / ship.maxThrust;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 15, 0, Math.PI * 2 * Math.abs(accScale));
+                this.ctx.strokeStyle = accScale > 0 ? 'rgba(255, 102, 0, 0.5)' : 'rgba(51, 102, 255, 0.5)';
+                this.ctx.stroke();
+            }
         }
 
         this.ctx.restore();

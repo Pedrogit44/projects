@@ -32,13 +32,15 @@ class UI {
     }
 
     updateControls(player) {
-        // Update any dynamic control information if needed
+        // Update dynamic control information with acceleration
         const speed = Math.round(player.getSpeed());
+        const acceleration = Math.round(player.acceleration);
         document.querySelector('#stats').innerHTML = `
             <div>Credits: <span id="credits">${player.credits}</span></div>
             <div>Hull: <span id="hull">${Math.round(player.health)}</span>%</div>
             <div>Energy: <span id="energy">${Math.round(player.energy)}</span>%</div>
             <div>Speed: <span id="speed">${speed}</span></div>
+            <div>Acceleration: <span id="acceleration">${acceleration}</span></div>
         `;
     }
 

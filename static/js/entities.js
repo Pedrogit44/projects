@@ -12,27 +12,38 @@ class Ship extends Entity {
     constructor(x, y) {
         super(x, y, 20);
         this.thrust = 0;
-        this.maxThrust = 500; // Increased for better space movement
-        this.turnSpeed = Math.PI * 0.8; // Slightly reduced for better control
+        this.maxThrust = 500;
+        this.turnSpeed = Math.PI * 0.8;
         this.health = 100;
         this.energy = 100;
         this.inventory = [];
         this.credits = 1000;
-        this.maxSpeed = 2000; // Maximum speed in pixels per second
+        this.maxSpeed = 2000;
+        this.inertialDampening = 0.2;
+        this.acceleration = 0;
+        this.maxAcceleration = 1000;
     }
 
     update(deltaTime) {
-        // Calculate thrust vector based on ship's rotation
         const thrustVector = Physics.rotateVector(
             { x: this.thrust, y: 0 },
             this.rotation
         );
 
-        // Apply thrust to velocity
-        this.velocity.x += thrustVector.x * deltaTime;
-        this.velocity.y += thrustVector.y * deltaTime;
+        if (this.thrust > 0) {
+            this.acceleration = Math.min(this.acceleration + this.maxAcceleration * deltaTime, this.maxThrust);
+        } else if (this.thrust < 0) {
+            this.acceleration = Math.max(this.acceleration - this.maxAcceleration * deltaTime, -this.maxThrust / 2);
+        } else {
+            this.acceleration *= 0.98;
+        }
 
-        // Cap maximum speed
+        const targetVelocityX = thrustVector.x * this.acceleration / this.maxThrust;
+        const targetVelocityY = thrustVector.y * this.acceleration / this.maxThrust;
+
+        this.velocity.x += (targetVelocityX - this.velocity.x) * this.inertialDampening * deltaTime;
+        this.velocity.y += (targetVelocityY - this.velocity.y) * this.inertialDampening * deltaTime;
+
         const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
         if (currentSpeed > this.maxSpeed) {
             const scale = this.maxSpeed / currentSpeed;
@@ -40,7 +51,6 @@ class Ship extends Entity {
             this.velocity.y *= scale;
         }
 
-        // Update position
         this.x += this.velocity.x * deltaTime;
         this.y += this.velocity.y * deltaTime;
     }
