@@ -1,0 +1,3 @@
+[submodule "SolarChase"]
+	path = SolarChase
+	url = ./SolarChase/
