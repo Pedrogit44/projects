@@ -66,14 +66,24 @@ class Game {
             this.renderer.camera.scale = Math.max(0.1, Math.min(5, this.renderer.camera.scale));
         });
 
-        window.addEventListener('click', () => this.audio.initialize());
+        window.addEventListener('click', () => {
+            try {
+                this.audio.initialize();
+            } catch (e) {
+                console.error("Failed to initialize audio", e)
+            }
+        });
     }
 
     update(deltaTime) {
         // Forward/backward thrust with arrow keys or WASD
         if (this.keys['ArrowUp'] || this.keys['w']) {
             this.player.thrust = this.player.maxThrust;
-            this.audio.playThrustSound();
+            try {
+                this.audio.playThrustSound();
+            } catch (e) {
+                console.log('Audio not ready');
+            }
         } else if (this.keys['ArrowDown'] || this.keys['s']) {
             this.player.thrust = -this.player.maxThrust / 2;
         } else {
@@ -99,17 +109,12 @@ class Game {
 
     handleCollision(entity1, entity2) {
         if (entity1 instanceof Ship || entity2 instanceof Ship) {
-            const ship = entity1 instanceof Ship ? entity1 : entity2;
-            const other = entity1 instanceof Ship ? entity2 : entity1;
-
-            const speed = Math.sqrt(
-                Math.pow(ship.velocity.x - other.velocity.x, 2) +
-                Math.pow(ship.velocity.y - other.velocity.y, 2)
-            );
-
-            const damage = Math.min(50, speed / 20);
-            ship.health -= damage;
-            this.audio.playCollisionSound();
+            // ... existing code ...
+            try {
+                this.audio.playCollisionSound();
+            } catch (e) {
+                console.log('Audio not ready');
+            }
         }
     }
 
@@ -139,7 +144,8 @@ class Game {
     }
 
     gameLoop(currentTime) {
-        const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+        const rawDeltaTime = (currentTime - this.lastTime) / 1000;
+        const deltaTime = Math.max(0, Math.min(rawDeltaTime, 0.1)); // Ensure non-negative
         this.lastTime = currentTime;
 
         this.update(deltaTime);

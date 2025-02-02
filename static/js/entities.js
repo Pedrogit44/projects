@@ -12,13 +12,13 @@ class Ship extends Entity {
     constructor(x, y) {
         super(x, y, 20);
         this.thrust = 0;
-        this.maxThrust = 500;
+        this.maxThrust = 200;
         this.turnSpeed = Math.PI * 0.8;
         this.health = 100;
         this.energy = 100;
         this.inventory = [];
         this.credits = 1000;
-        this.maxSpeed = 1000;
+        this.maxSpeed = 500;
         this.acceleration = 0;
     }
 
@@ -32,15 +32,14 @@ class Ship extends Entity {
             y: Math.sin(this.rotation)
         };
 
-        // Apply thrust in current direction
+        // Apply thrust directly to velocity
         if (this.thrust !== 0) {
-            // Add new velocity based on thrust direction
             const thrustPower = this.thrust * deltaTime;
             this.velocity.x += direction.x * thrustPower;
             this.velocity.y += direction.y * thrustPower;
         }
 
-        // Normalize velocity if it's getting too large
+        // Cap maximum speed
         const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
         if (currentSpeed > this.maxSpeed) {
             const scale = this.maxSpeed / currentSpeed;
@@ -48,11 +47,9 @@ class Ship extends Entity {
             this.velocity.y *= scale;
         }
 
-        // Update position with basic validation
-        if (isFinite(this.velocity.x) && isFinite(this.velocity.y)) {
-            this.x += this.velocity.x * deltaTime;
-            this.y += this.velocity.y * deltaTime;
-        }
+        // Update position
+        this.x += this.velocity.x * deltaTime;
+        this.y += this.velocity.y * deltaTime;
 
         // Store current speed as acceleration for UI display
         this.acceleration = currentSpeed;
