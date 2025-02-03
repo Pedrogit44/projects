@@ -1,14 +1,15 @@
-modules = ["python-3.11"]
+modules = ["nodejs-20", "web", "python-3.11", "nix"]
+run = "run=\"python main.py\""
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = ["sh", "-c", "run=\"python main.py\""]
 
 [workflows]
-runButton = "Project"
+runButton = "Flask Web App"
 
 [[workflows.workflow]]
 name = "Project"

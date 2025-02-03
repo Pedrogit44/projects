@@ -29,7 +29,7 @@ class Ship extends Entity {
         // Get direction vector from rotation
         const direction = {
             x: Math.cos(this.rotation),
-            y: Math.sin(this.rotation)
+            y: Math.sin(this.rotation),
         };
 
         // Apply thrust directly to velocity
@@ -40,7 +40,10 @@ class Ship extends Entity {
         }
 
         // Cap maximum speed
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        const currentSpeed = Math.sqrt(
+            this.velocity.x * this.velocity.x +
+                this.velocity.y * this.velocity.y,
+        );
         if (currentSpeed > this.maxSpeed) {
             const scale = this.maxSpeed / currentSpeed;
             this.velocity.x *= scale;
@@ -56,7 +59,10 @@ class Ship extends Entity {
     }
 
     getSpeed() {
-        return Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        return Math.sqrt(
+            this.velocity.x * this.velocity.x +
+                this.velocity.y * this.velocity.y,
+        );
     }
 }
 
@@ -65,12 +71,12 @@ class Planet extends Entity {
         super(x, y, radius);
         this.name = name;
         this.orbitRadius = Math.sqrt(x * x + y * y);
-        this.orbitSpeed = orbitSpeed * 2; // Increased orbit speed
+        this.orbitSpeed = orbitSpeed * 0.5; // Increased orbit speed
         this.orbitAngle = Math.atan2(y, x);
         this.resources = {
             minerals: Math.random() * 100,
             metals: Math.random() * 100,
-            fuel: Math.random() * 100
+            fuel: Math.random() * 100,
         };
     }
 
